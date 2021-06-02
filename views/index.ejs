@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script src="/javascripts/global.js"></script>
+  </head>
+  <body onload="onLoad()">
+    <!-- WRAPPER -->
+    <div id="wrapper">
+      <h1>Authenticate with Spotify</h1>
+      <button onclick="loginSpotify()">Authenticate</button>
+      <h1>Join or create a new room!</h1>
+      <input id="room_id"></input>
+      <button onclick="joinRoom()">Join</button>
+    </div>
+    <!-- /WRAPPER -->
+  </body>
+</html>

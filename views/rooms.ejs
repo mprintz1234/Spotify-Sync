@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script src="/javascripts/room_logic.js"></script>
+  </head>
+  <body onload="onLoad()">
+
+    <div style="text-align:center" >
+      <h1>You are currently playing:</h1>
+      <img id="albumImage" src="" crossOrigin="" width="400" height="400">
+      <div id="trackTitle"></div>
+      <div id="trackArtist"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <script>
+      // Select the background color based on album image
+      function colorPalette(){
+        return new Promise( function(resolve, reject) {
+          const colorThief = new ColorThief();
+          const img = document.getElementById("albumImage");
+          
+          // Make sure image is finished loading
+          if (img.complete) {
+            color = colorThief.getColor(img);
+            document.body.style.backgroundColor = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
+            console.log(color)
+            resolve(color)
+          } 
+          else {
+            img.addEventListener('load', function() {
+              color = colorThief.getColor(img);
+              document.body.style.backgroundColor = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
+              console.log(color)
+              resolve(color)
+            });
+          }
+        })
+      }
+    </script>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var room_id = (window.location.href).split('/')[4]
+        var socket = io({ query: `r_id=${room_id}` });
+
+        // Get the room's currently playing song (when client first joins room)
+        function getRoomSong() {
+          socket.emit('get currently playing', '');
+        }
+
+        // Send new song to room
+        function sendSong(obj) {
+          socket.emit('currently playing', obj);
+        }
+
+        // Tell others in room to pause song
+        function pauseSong() {
+          socket.emit('pause song', '');
+        }
+
+        // Send currently playing song
+        socket.on('get position', function(msg) {
+          socket.emit('get position', {'track_uri': sessionStorage.getItem("currently playing"), 'position_ms': sessionStorage.getItem("track position")});
+        })
+        
+        // Update song with room's song
+        socket.on('currently playing', function(obj) {
+          console.log(obj)
+          if (obj.track_uri != '') {
+            sessionStorage.setItem("currently playing", obj.track_uri);
+            sessionStorage.setItem("lastPlayed", obj.track_uri);
+            sessionStorage.setItem("track position", obj.position_ms);
+            sessionStorage.setItem('is_playing', true);
+            //console.log(obj.track_uri);
+            playSong(obj.track_uri, obj.position_ms);
+          }
+        });
+
+        // Every 3 seconds, server tells client to check if client has changed the song
+        socket.on('update song', function(msg) {
+          getCurrentlyPlaying()
+        })
+
+        // Pause local player
+        socket.on('pause song', function(msg) {
+          console.log('Going to pause song')
+          callApiPause("PUT", PAUSE, {})
+        })
+    </script>
+  </body>
+</html>
